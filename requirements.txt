@@ -33,9 +33,6 @@ MarkupSafe==2.1.1
 matplotlib==3.8.0
 mecab-ko-dic-msvc==0.999
 mecab-ko-msvc==0.999
-mkl-fft==1.3.8
-mkl-random==1.2.4
-mkl-service==2.4.0
 multidict==6.0.2
 munkres==1.1.4
 networkx==3.2.1
