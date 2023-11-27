@@ -1,0 +1,27 @@
+# Pycache
+__pycache__/
+
+# Python bytecode
+*.pyc
+
+# Virtual environment
+venv/
+
+# IDE files
+.vscode/
+.idea/
+
+# Flask-specific
+instance/
+*.pyc
+*.pyo
+
+# Logs
+log/
+
+# Test files
+tests/
+
+# Local development files
+.dockerignore
+.DS_Store

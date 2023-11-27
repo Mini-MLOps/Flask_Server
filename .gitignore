@@ -1,0 +1,71 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Python virtual environment
+venv/
+venv3/
+venv-*/
+*.env
+
+# IDE files
+.vscode/
+.idea/
+
+# Flask instance folder
+instance/
+
+# Logs
+log/
+
+# Environment variables file
+.env
+
+# Compiled Python files
+*.pyc
+*.pyo
+
+# Dependency directories
+env/
+lib/
+lib64/
+include/
+bin/
+
+# Distribution / packaging
+dist/
+build/
+*.egg-info/
+
+# Compiled C extensions
+*.so
+
+# Compiled extensions
+*.pyd
+*.pyo
+
+# Coverage directory
+htmlcov/
+
+# PyInstaller
+__pyinstaller/
+
+# Jupyter Notebook
+.ipynb_checkpoints/
+
+# pyenv
+.python-version
+
+# pipenv
+Pipfile.lock
+
+# pyenv
+.python-version
+
+# pipenv
+Pipfile.lock
+
+# Poetry
+poetry.lock
