@@ -27,13 +27,6 @@ log/
 *.pyc
 *.pyo
 
-# Dependency directories
-env/
-lib/
-lib64/
-include/
-bin/
-
 # Distribution / packaging
 dist/
 build/
