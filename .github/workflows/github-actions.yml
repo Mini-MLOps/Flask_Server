@@ -48,6 +48,11 @@ jobs:
           key: ${{ secrets.PRIVATE_KEY }}  # pem key
           port: 3322
           script: |
+            existing_container=$(docker ps -aqf "ancestor=${{ secrets.DOCKER_USERNAME }}/${{ secrets.DOCKER_REPOSITORY }}")
+            if [ -n "$existing_container" ]; then
+              docker stop "$existing_container" || true
+              docker rm "$existing_container" || true
+            fi
             docker pull ${{ secrets.DOCKER_USERNAME }}/${{ secrets.DOCKER_REPOSITORY }}
             docker run -d --log-driver=syslog -p 5000:5000 ${{ secrets.DOCKER_USERNAME }}/${{ secrets.DOCKER_REPOSITORY }}
             docker rm $(docker ps --filter 'status=exited' -a -q)
