@@ -49,6 +49,6 @@ jobs:
           port: 3322
           script: |
             docker pull ${{ secrets.DOCKER_USERNAME }}/${{ secrets.DOCKER_REPOSITORY }}
-            docker run -d --log-driver=syslog -p 5020:5020 ${{ secrets.DOCKER_USERNAME }}/${{ secrets.DOCKER_REPOSITORY }}
+            docker run -d --log-driver=syslog -p 5000:5000 ${{ secrets.DOCKER_USERNAME }}/${{ secrets.DOCKER_REPOSITORY }}
             docker rm $(docker ps --filter 'status=exited' -a -q)
             docker image prune -a -f
