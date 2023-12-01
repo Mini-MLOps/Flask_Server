@@ -18,8 +18,7 @@ import uuid
 app = Flask(__name__)
 CORS(app)
 
-# BASE_URL = "http://211.62.99.58:8020"
-BASE_URL = "http://localhost:8000"
+BASE_URL = "http://211.62.99.58:8020"
 PRE_PATH = "data"
 VOCAB_SIZE = "16000"
 
