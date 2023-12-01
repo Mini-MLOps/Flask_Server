@@ -93,34 +93,26 @@ def deploy_model(model_id, model_name, table_name, movie_data):
     )
 
     plots_token = []
-    # gpt_vector_string_list = []
-
     for movie_id, plot in movie_data:
         plot_token = []
         sentences = split_sentences(plot)
         for sentence in sentences:
             sentencepiece_tokens = sentencepiece.tokenize(sentencepiece_model, sentence)
             plot_token.append(sentencepiece_tokens)
-            # gpt_vector_string_list.append(ed.encode(gpt.vectorize(sentence)))
         plots_token.append((movie_id, plot_token))
 
-    index = 0
     db.truncate(table_name)
-    for i in range(len(plots_token)):
-        movie_id, plot_token = plots_token[i]
+    for movie_id, plot_token in plots_token:
         word2vec_vector_list = word2vec.vectorize(word2vec_model, plot_token)
         for word2vec_vector in word2vec_vector_list:
             word2vec_vector_string = ed.encode(word2vec_vector)
             db.insert(
-                f"INSERT INTO {table_name} (movie_id, model_id, word2vec) VALUES (%s, %s, %s)",
+                f"INSERT INTO {table_name} (movie_id, vector) VALUES (%s, %s)",
                 (
                     movie_id,
-                    model_id,
                     word2vec_vector_string,
-                    # gpt_vector_string_list[index],
                 ),
             )
-            index += 1
 
     requests.post(f"{BASE_URL}/api/models/{model_id}/deploy-complete")
 
