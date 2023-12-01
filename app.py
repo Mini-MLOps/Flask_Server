@@ -12,25 +12,20 @@ from flask_cors import CORS
 from multiprocessing import Process
 import threading
 import requests
+import uuid
 
 
 app = Flask(__name__)
 CORS(app)
 
-EMBEDDING_TABLE = "embedding_vector"
-INSERT_SQL = (
-    "INSERT INTO embedding_vector (movie_id, model_id, word2vec) VALUES (%s, %s, %s)"
-)
-# PRE_PATH = "home/ubuntu/data"
+BASE_URL = "http://211.62.99.58:8020"
 PRE_PATH = "data"
 VOCAB_SIZE = "16000"
 
 mecab = MeCab_tokenizer()
 sentencepiece = Sentencepiece_tokenizer()
 word2vec = Word2Vec_vectorizer()
-gpt = GPT_embedding(
-    "OPENAI_API_KEY", "text-embedding-ada-002"
-)
+gpt = GPT_embedding("OPENAI_API_KEY", "text-embedding-ada-002")
 cosine = Cosine_similarity()
 db = DB_connect()
 file = File_processing(f"{PRE_PATH}/mecab.txt")
@@ -38,7 +33,7 @@ ed = Encode_Decode()
 results = []
 
 
-def train_model(model_id, hyperparameter, movie_data):
+def train_model(hyperparameter, movie_data):
     file.remove()
     for plot in movie_data:
         sentences = split_sentences(plot)
@@ -61,16 +56,18 @@ def train_model(model_id, hyperparameter, movie_data):
         for sentence in sentences:
             sentencepiece_tokens = sentencepiece.tokenize(sentencepiece_model, sentence)
             plot_tokens.append(sentencepiece_tokens)
-    print(plot_tokens[:50])
 
+    model_name = str(uuid.uuid4())
     word2vec.model_train_save(
         plot_tokens,
         *(list(hyperparameter.values())[2:]),
-        f"{PRE_PATH}/models/word2vec/word2vec-{model_id}.model",
+        f"{PRE_PATH}/models/word2vec/word2vec-{model_name}.model",
     )
 
+    hyperparameter["name"] = model_name
     requests.post(
-        "http://localhost:8080/api/models/train-complete", json=hyperparameter
+        "/api/models/train-complete",
+        json=hyperparameter,
     )
 
 
@@ -78,22 +75,21 @@ def train_model(model_id, hyperparameter, movie_data):
 def trigger_training():
     request_data = request.get_json()
 
-    model_id = request_data.get("modelId")
     hyperparameter = request_data.get("parameter")
     movie_data = [movie.get("plot") for movie in request_data.get("movie")]
 
-    p = Process(target=train_model, args=(model_id, hyperparameter, movie_data))
+    p = Process(target=train_model, args=(hyperparameter, movie_data))
     p.start()
 
     return jsonify({"message": "Request successful"}), 200
 
 
-def deploy_model(model_id, movie_data):
+def deploy_model(model_id, model_name, table_name, movie_data):
     sentencepiece_model = sentencepiece.model_load(
         f"{PRE_PATH}/models/sentencepiece/sentencepiece.model"
     )
     word2vec_model = word2vec.model_load(
-        f"{PRE_PATH}/models/word2vec/word2vec-{model_id}.model"
+        f"{PRE_PATH}/models/word2vec/word2vec-{model_name}.model"
     )
 
     plots_token = []
@@ -109,14 +105,14 @@ def deploy_model(model_id, movie_data):
         plots_token.append((movie_id, plot_token))
 
     index = 0
-    db.truncate(EMBEDDING_TABLE)
+    db.truncate(table_name)
     for i in range(len(plots_token)):
         movie_id, plot_token = plots_token[i]
         word2vec_vector_list = word2vec.vectorize(word2vec_model, plot_token)
         for word2vec_vector in word2vec_vector_list:
             word2vec_vector_string = ed.encode(word2vec_vector)
             db.insert(
-                INSERT_SQL,
+                f"INSERT INTO {table_name} (movie_id, model_id, word2vec) VALUES (%s, %s, %s)",
                 (
                     movie_id,
                     model_id,
@@ -126,21 +122,22 @@ def deploy_model(model_id, movie_data):
             )
             index += 1
 
-    requests.post(
-        "http://localhost:8080/api/models/deploy-complete",
-        json={"result": "Request successful"},
-    )
+    requests.post(f"{BASE_URL}/api/models/{model_id}/deploy-complete")
 
 
 @app.route("/<int:model_id>/deploy", methods=["POST"])
 def trigger_deploy(model_id):
     request_data = request.get_json()
 
+    model_name = request_data.get("modelName")
+    table_name = request_data.get("tableName")
     movie_data = [
         (movie.get("id"), movie.get("plot")) for movie in request_data.get("movie")
     ]
 
-    p = Process(target=deploy_model, args=(model_id, movie_data))
+    p = Process(
+        target=deploy_model, args=(model_id, model_name, table_name, movie_data)
+    )
     p.start()
 
     return jsonify({"message": "Request successful"}), 200
@@ -169,15 +166,12 @@ def result(user_input, str_embedding_data):
         results.append((movie_id, similarity))
 
     requests.post(
-        "http://localhost:8080/api/user-logs",
+        f"{BASE_URL}/api/user-logs",
         json={
             "input": user_input,
             "output": [
-                {"movieId": results[0][0], "similarity": results[0][1]},
-                {"movieId": results[1][0], "similarity": results[1][1]},
-                {"movieId": results[2][0], "similarity": results[2][1]},
-                {"movieId": results[3][0], "similarity": results[3][1]},
-                {"movieId": results[4][0], "similarity": results[4][1]},
+                {"movieId": results[i][0], "similarity": results[i][1]}
+                for i in range(5)
             ],
         },
     )
@@ -205,11 +199,8 @@ def trigger_result():
             {
                 "input": user_input,
                 "output": [
-                    {"movieId": results[0][0], "similarity": results[0][1]},
-                    {"movieId": results[1][0], "similarity": results[1][1]},
-                    {"movieId": results[2][0], "similarity": results[2][1]},
-                    {"movieId": results[3][0], "similarity": results[3][1]},
-                    {"movieId": results[4][0], "similarity": results[4][1]},
+                    {"movieId": results[i][0], "similarity": results[i][1]}
+                    for i in range(5)
                 ],
             },
         ),
