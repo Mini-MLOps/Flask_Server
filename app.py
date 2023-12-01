@@ -60,7 +60,7 @@ def train_model(hyperparameter, movie_data):
     model_name = str(uuid.uuid4())
     word2vec.model_train_save(
         plot_tokens,
-        *(list(hyperparameter.values())[2:]),
+        *(list(hyperparameter.values())[3:]),
         f"{PRE_PATH}/models/word2vec/word2vec-{model_name}.model",
     )
 
