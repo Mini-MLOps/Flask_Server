@@ -163,7 +163,7 @@ def trigger_result():
     model_name = request_data["modelName"]
 
     manager = Manager()
-    result_list = manager.list()
+    result_list = manager.list("/tmp/result_list")
 
     p = Process(
         target=result, args=(user_input, str_embedding_data, model_name, result_list)
