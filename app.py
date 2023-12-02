@@ -10,7 +10,6 @@ from kss import split_sentences
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 from multiprocessing import Process, Manager
-import threading
 import requests
 import uuid
 
@@ -18,8 +17,7 @@ import uuid
 app = Flask(__name__)
 CORS(app)
 
-BASE_URL = "http://localhost:8020"
-# BASE_URL = "http://211.62.99.58:8020"
+BASE_URL = "http://211.62.99.58:8020"
 PRE_PATH = "data"
 VOCAB_SIZE = "16000"
 
@@ -190,5 +188,4 @@ def trigger_result():
 
 
 if __name__ == "__main__":
-    app.run(debug=True)
-    # app.run()
+    app.run()
