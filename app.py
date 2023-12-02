@@ -9,7 +9,7 @@ from Encode_Decode import Encode_Decode
 from kss import split_sentences
 from flask import Flask, request, jsonify
 from flask_cors import CORS
-from multiprocessing import Process
+from multiprocessing import Process, Manager
 import threading
 import requests
 import uuid
@@ -18,7 +18,8 @@ import uuid
 app = Flask(__name__)
 CORS(app)
 
-BASE_URL = "http://211.62.99.58:8020"
+BASE_URL = "http://localhost:8020"
+# BASE_URL = "http://211.62.99.58:8020"
 PRE_PATH = "data"
 VOCAB_SIZE = "16000"
 
@@ -30,7 +31,6 @@ cosine = Cosine_similarity()
 db = DB_connect()
 file = File_processing(f"{PRE_PATH}/mecab.txt")
 ed = Encode_Decode()
-results = []
 
 
 def train_model(hyperparameter, movie_data):
@@ -131,68 +131,57 @@ def trigger_deploy(model_id):
         target=deploy_model, args=(model_id, model_name, table_name, movie_data)
     )
     p.start()
+    p.join()
 
     return jsonify({"message": "Request successful"}), 200
 
 
-def result(user_input, str_embedding_data):
-    global results
-    model_id = str_embedding_data[0].get("modelId")
+def result(user_input, str_embedding_data, model_name, result_list):
     sentencepiece_model = sentencepiece.model_load(
         f"{PRE_PATH}/models/sentencepiece/sentencepiece.model"
     )
     word2vec_model = word2vec.model_load(
-        f"{PRE_PATH}/models/word2vec/word2vec-{model_id}.model"
+        f"{PRE_PATH}/models/word2vec/word2vec-{model_name}.model"
     )
 
     user_input_token = sentencepiece.tokenize(sentencepiece_model, user_input)
     user_vector_list = word2vec.vectorize(word2vec_model, [user_input_token])[0]
     embedding_data = [
-        (str_vector.get("movieId"), ed.decode(str_vector.get("word2vec")))
+        (str_vector.get("movieId"), ed.decode(str_vector.get("vector")))
         for str_vector in str_embedding_data
     ]
 
-    results = []
     movie_list = cosine.find_most_similar_movies(user_vector_list, embedding_data, 5)
     for movie_id, similarity in movie_list:
-        results.append((movie_id, similarity))
-
-    requests.post(
-        f"{BASE_URL}/api/user-logs",
-        json={
-            "input": user_input,
-            "output": [
-                {"movieId": results[i][0], "similarity": results[i][1]}
-                for i in range(5)
-            ],
-        },
-    )
+        result_list.append((movie_id, similarity))
 
 
 @app.route("/result", methods=["POST"])
 def trigger_result():
-    global results
     request_data = request.get_json()
 
     user_input = request_data["input"]
     str_embedding_data = request_data["embeddingVector"]
+    model_name = request_data["modelName"]
 
-    threads = []
-    t = threading.Thread(target=result, args=(user_input, str_embedding_data))
-    t.start()
-    threads.append(t)
-    threads[0].join()
+    manager = Manager()
+    result_list = manager.list()
 
-    # p = Process(target=result, args=(user_input, str_embedding_data))
-    # p.start()
+    p = Process(
+        target=result, args=(user_input, str_embedding_data, model_name, result_list)
+    )
+    p.start()
 
     return (
         jsonify(
             {
                 "input": user_input,
                 "output": [
-                    {"movieId": results[i][0], "similarity": results[i][1]}
-                    for i in range(5)
+                    {
+                        "movieId": movie_id,
+                        "similarity": similarity,
+                    }
+                    for movie_id, similarity in result_list
                 ],
             },
         ),
