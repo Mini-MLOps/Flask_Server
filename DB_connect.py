@@ -6,7 +6,7 @@ class DB_connect:
         self.conn = pymysql.connect(
             host="211.62.99.58",
             port=3326,
-            user="namiso",
+            user="root",
             password="1234",
             db="mlops_db",
             charset="utf8",
