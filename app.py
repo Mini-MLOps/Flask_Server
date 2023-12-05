@@ -18,7 +18,7 @@ app = Flask(__name__)
 CORS(app)
 
 BASE_URL = "http://211.62.99.58:8020"
-PRE_PATH = "/app/data"
+PRE_PATH = "data"
 VOCAB_SIZE = "16000"
 
 mecab = MeCab_tokenizer()
