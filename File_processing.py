@@ -10,5 +10,5 @@ class File_processing:
             f.write(content + "\n")
 
     def remove(self):
-        if os.path.isfile(self.file_path):
-            os.remove(self.file_path)
+        with open(self.file_path, 'w') as f:
+            f.write('')
