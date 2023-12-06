@@ -148,9 +148,23 @@ def result(user_input, str_embedding_data, model_name, result_list):
         for str_vector in str_embedding_data
     ]
 
-    movie_list = cosine.find_most_similar_movies(user_vector_list, embedding_data, 5)
+    movie_list = cosine.find_most_similar_movies(user_vector_list, embedding_data, 10)
     for movie_id, similarity in movie_list:
         result_list.append((movie_id, similarity))
+
+    requests.post(
+        f"{BASE_URL}/api/user-logs",
+        json={
+            "input": user_input,
+            "output": [
+                {
+                    "movieId": movie_id,
+                    "similarity": similarity,
+                }
+                for movie_id, similarity in result_list
+            ],
+        },
+    )
 
 
 @app.route("/result", methods=["POST"])
