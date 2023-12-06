@@ -112,7 +112,7 @@ def deploy_model(model_id, model_name, table_name, movie_data):
                 ),
             )
 
-    requests.post(f"{BASE_URL}/api/models/{model_id}/deploy-complete")
+    requests.post(f"{BASE_URL}/api/models/deploy-complete?id={model_id}")
 
 
 @app.route("/<int:model_id>/deploy", methods=["POST"])

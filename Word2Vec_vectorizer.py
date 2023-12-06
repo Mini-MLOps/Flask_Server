@@ -2,6 +2,7 @@ from callback import callback
 from gensim.models import Word2Vec
 import numpy as np
 import multiprocessing
+import os
 
 
 class Word2Vec_vectorizer:
@@ -19,6 +20,8 @@ class Word2Vec_vectorizer:
             compute_loss=True,
             callbacks=[callback()],
         )
+        if not os.path.exists(model_path):
+            os.makedirs(model_path)
         model.save(model_path)
 
     def model_load(self, model_path):
