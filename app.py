@@ -129,7 +129,6 @@ def trigger_deploy(model_id):
         target=deploy_model, args=(model_id, model_name, table_name, movie_data)
     )
     p.start()
-    p.join()
 
     return jsonify({"message": "Request successful"}), 200
 
@@ -170,8 +169,6 @@ def trigger_result():
     )
     p.start()
     p.join()
-
-    print(result_list)
 
     return (
         jsonify(
