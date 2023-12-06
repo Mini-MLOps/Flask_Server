@@ -20,8 +20,8 @@ class Word2Vec_vectorizer:
             compute_loss=True,
             callbacks=[callback()],
         )
-        if not os.path.exists(model_path):
-            os.makedirs(model_path)
+        if not os.path.exists(os.path.dirname(model_path)):
+            os.makedirs(os.path.dirname(model_path))
         model.save(model_path)
 
     def model_load(self, model_path):
