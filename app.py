@@ -24,7 +24,7 @@ VOCAB_SIZE = "16000"
 mecab = MeCab_tokenizer()
 sentencepiece = Sentencepiece_tokenizer()
 word2vec = Word2Vec_vectorizer()
-gpt = GPT_embedding("OPENAI_API_KEY", "text-embedding-ada-002")
+gpt = GPT_embedding("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", "text-embedding-ada-002")
 cosine = Cosine_similarity()
 db = DB_connect()
 file = File_processing(f"{PRE_PATH}/mecab.txt")
@@ -133,7 +133,7 @@ def trigger_deploy(model_id):
     return jsonify({"message": "Request successful"}), 200
 
 
-def result(user_input, str_embedding_data, model_name, result_list):
+def resultWord2Vec(user_input, str_embedding_data, model_name, result_list):
     sentencepiece_model = sentencepiece.model_load(
         f"{PRE_PATH}/models/sentencepiece/sentencepiece.model"
     )
@@ -166,21 +166,36 @@ def result(user_input, str_embedding_data, model_name, result_list):
         },
     )
 
+def resultGpt(user_input, str_embedding_data, result_list):
+    user_input_vector = gpt.vectorize(user_input)
+    embedding_data = [
+        (str_vector.get("movieId"), ed.decode(str_vector.get("vector")))
+        for str_vector in str_embedding_data
+    ]
+
+    movie_list = cosine.find_most_similar_movies(user_input_vector, embedding_data, 10)
+    for movie_id, similarity in movie_list:
+        result_list.append((movie_id, similarity))
+
 
 @app.route("/result", methods=["POST"])
 def trigger_result():
     request_data = request.get_json()
 
-    user_input = request_data["input"]
-    str_embedding_data = request_data["embeddingVector"]
-    model_name = request_data["modelName"]
-
     manager = Manager()
     result_list = manager.list()
 
-    p = Process(
-        target=result, args=(user_input, str_embedding_data, model_name, result_list)
-    )
+    user_input = request_data["input"]
+    str_embedding_data = request_data["embeddingVector"]
+    if "modelName" in dict(request_data).keys():
+        model_name = request_data["modelName"]
+        p = Process(
+            target=resultWord2Vec, args=(user_input, str_embedding_data, model_name, result_list)
+        )
+    else:
+        p = Process(
+            target=resultGpt, args=(user_input, str_embedding_data, result_list)
+        )
     p.start()
     p.join()
 
