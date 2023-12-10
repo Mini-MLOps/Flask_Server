@@ -152,20 +152,6 @@ def resultWord2Vec(user_input, str_embedding_data, model_name, result_list):
     for movie_id, similarity in movie_list:
         result_list.append((movie_id, similarity))
 
-    requests.post(
-        f"{BASE_URL}/api/user-logs",
-        json={
-            "input": user_input,
-            "output": [
-                {
-                    "movieId": movie_id,
-                    "similarity": similarity,
-                }
-                for movie_id, similarity in result_list
-            ],
-        },
-    )
-
 def resultGpt(user_input, str_embedding_data, result_list):
     user_input_vector = gpt.vectorize(user_input)
     embedding_data = [
