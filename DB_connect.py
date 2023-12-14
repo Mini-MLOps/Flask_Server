@@ -11,6 +11,7 @@ class DB_connect:
             db="mlops_db",
             charset="utf8",
         )
+        self.conn.ping(reconnect=True)
         self.curs = self.conn.cursor()
 
     def select(self, sql):
