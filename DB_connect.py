@@ -16,6 +16,10 @@ class DB_connect:
         )
         self.curs = self.conn.cursor()
 
+    def close(self):
+        self.curs.close()
+        self.conn.close()
+
     def select(self, sql):
         self.connect()
         self.curs.execute(sql)
@@ -34,7 +38,3 @@ class DB_connect:
         self.curs.execute(f"TRUNCATE {table_name};")
         self.conn.commit()
         self.close()
-
-    def close(self):
-        self.curs.close()
-        self.conn.close()

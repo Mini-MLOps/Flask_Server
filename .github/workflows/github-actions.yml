@@ -17,11 +17,6 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      - name: Setup Python 3.9
-        uses: actions/setup-python@v3
-        with:
-          python-version: '3.9'
-
       - name: Docker Login
         uses: docker/login-action@v2.2.0
         with:
